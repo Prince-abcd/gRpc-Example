@@ -20,6 +20,8 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	Example_ServerReply_FullMethodName = "/Example/ServerReply"
+	Example_Addtodo_FullMethodName     = "/Example/Addtodo"
+	Example_Gettodo_FullMethodName     = "/Example/Gettodo"
 )
 
 // ExampleClient is the client API for Example service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExampleClient interface {
 	ServerReply(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
+	Addtodo(ctx context.Context, in *AddTodoRequest, opts ...grpc.CallOption) (*AddTodoResponse, error)
+	Gettodo(ctx context.Context, in *GetTodoRequest, opts ...grpc.CallOption) (*GetTodoRequest, error)
 }
 
 type exampleClient struct {
@@ -47,11 +51,33 @@ func (c *exampleClient) ServerReply(ctx context.Context, in *HelloRequest, opts 
 	return out, nil
 }
 
+func (c *exampleClient) Addtodo(ctx context.Context, in *AddTodoRequest, opts ...grpc.CallOption) (*AddTodoResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddTodoResponse)
+	err := c.cc.Invoke(ctx, Example_Addtodo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *exampleClient) Gettodo(ctx context.Context, in *GetTodoRequest, opts ...grpc.CallOption) (*GetTodoRequest, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTodoRequest)
+	err := c.cc.Invoke(ctx, Example_Gettodo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExampleServer is the server API for Example service.
 // All implementations must embed UnimplementedExampleServer
 // for forward compatibility.
 type ExampleServer interface {
 	ServerReply(context.Context, *HelloRequest) (*HelloResponse, error)
+	Addtodo(context.Context, *AddTodoRequest) (*AddTodoResponse, error)
+	Gettodo(context.Context, *GetTodoRequest) (*GetTodoRequest, error)
 	mustEmbedUnimplementedExampleServer()
 }
 
@@ -64,6 +90,12 @@ type UnimplementedExampleServer struct{}
 
 func (UnimplementedExampleServer) ServerReply(context.Context, *HelloRequest) (*HelloResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ServerReply not implemented")
+}
+func (UnimplementedExampleServer) Addtodo(context.Context, *AddTodoRequest) (*AddTodoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Addtodo not implemented")
+}
+func (UnimplementedExampleServer) Gettodo(context.Context, *GetTodoRequest) (*GetTodoRequest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Gettodo not implemented")
 }
 func (UnimplementedExampleServer) mustEmbedUnimplementedExampleServer() {}
 func (UnimplementedExampleServer) testEmbeddedByValue()                 {}
@@ -104,6 +136,42 @@ func _Example_ServerReply_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Example_Addtodo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddTodoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExampleServer).Addtodo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Example_Addtodo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExampleServer).Addtodo(ctx, req.(*AddTodoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Example_Gettodo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTodoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExampleServer).Gettodo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Example_Gettodo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExampleServer).Gettodo(ctx, req.(*GetTodoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Example_ServiceDesc is the grpc.ServiceDesc for Example service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +182,14 @@ var Example_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ServerReply",
 			Handler:    _Example_ServerReply_Handler,
+		},
+		{
+			MethodName: "Addtodo",
+			Handler:    _Example_Addtodo_Handler,
+		},
+		{
+			MethodName: "Gettodo",
+			Handler:    _Example_Gettodo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
