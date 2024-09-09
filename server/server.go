@@ -8,7 +8,6 @@ import (
 
 	proto "Grpc/proto"
 
-	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -16,7 +15,7 @@ import (
 )
 
 type Todo struct {
-	ID    string `gorm:"primaryKey"`
+	ID    int `gorm:"primaryKey;autoIncrement"`
 	Title string
 }
 
@@ -26,7 +25,6 @@ type server struct {
 }
 
 func main() {
-
 	db, err := gorm.Open(sqlite.Open("todos.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -43,7 +41,6 @@ func main() {
 	}
 
 	srv := grpc.NewServer()
-
 	proto.RegisterExampleServer(srv, &server{db: db})
 
 	log.Println("Server is running on port 9000")
@@ -52,17 +49,40 @@ func main() {
 	}
 }
 
-func (s *server) ServerReply(ctx context.Context, req *proto.HelloRequest) (*proto.HelloResponse, error) {
-
+func (s *server) Addtodo(ctx context.Context, req *proto.AddTodoRequest) (*proto.AddTodoResponse, error) {
 	todo := Todo{
-		ID:    uuid.New().String(),
-		Title: req.Somestring,
+		Title: req.Todo.Title,
 	}
 
 	if err := s.db.Create(&todo).Error; err != nil {
 		return nil, fmt.Errorf("failed to create todo: %v", err)
 	}
 
+	return &proto.AddTodoResponse{Todo: &proto.Todo{
+		Id:    int32(todo.ID),
+		Title: todo.Title,
+	}}, nil
+}
+
+func (s *server) Gettodo(ctx context.Context, req *proto.GetTodoRequest) (*proto.GetTodoResponse, error) {
+	var todos []Todo
+
+	if err := s.db.Find(&todos).Error; err != nil {
+		return nil, fmt.Errorf("failed to retrieve todos: %v", err)
+	}
+
+	var protoTodos []*proto.Todo
+	for _, todo := range todos {
+		protoTodos = append(protoTodos, &proto.Todo{
+			Id:    int32(todo.ID),
+			Title: todo.Title,
+		})
+	}
+
+	return &proto.GetTodoResponse{Todo: protoTodos}, nil
+}
+
+func (s *server) ServerReply(ctx context.Context, req *proto.HelloRequest) (*proto.HelloResponse, error) {
 	fmt.Println("Received from client:", req.Somestring)
-	return &proto.HelloResponse{Reply: "Todo created with title: " + req.Somestring}, nil
+	return &proto.HelloResponse{Reply: "Reply from server: " + req.Somestring}, nil
 }
